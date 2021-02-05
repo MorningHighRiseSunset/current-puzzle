@@ -1,2 +1,0 @@
-# HourlyCat
-Hourly Cat
