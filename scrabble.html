@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html>
+<style>
+    .draggable {
+        position: absolute;
+        z-index: 9;
+        text-align: center;
+        border: 1px solid #d3d3d3;
+    }
+    
+    .tileLabel {
+        padding: 5px;
+        cursor: move;
+        z-index: 10;
+        color: #fff;
+        font-size: small;
+        vertical-align: middle;
+        text-align: center;
+        display: table-cell;
+    }
+    
+    .tileLabel.player1 {
+        background-color: #2196F3;
+    }
+    
+    .tileLabel.player2 {
+        background-color: #f27521;
+    }
+    
+    .tileLabel.played {
+        background-color: #736b5e;
+    }
+    
+    .tileLabel.played.newp1 {
+        background-color: #155d99 !important;
+    }
+    
+    .tileLabel.played.newp2 {
+        background-color: #994a15 !important;
+    }
+    
+    .valueLabel {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+    }
+    
+    .invisible {
+        display: none;
+    }
+    
+    .button {
+        padding: 4px;
+        margin-right: 4px;
+        background-color: #CDC6AAAA;
+        user-select: none;
+        border-radius: 5px;
+    }
+    
+    #board,
+    #specials,
+    #hider {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+    }
+    
+    #hider {
+        z-index: 10;
+    }
+    
+    #specials {
+        z-index: 11;
+    }
+    
+    #scores {
+        padding: 4px;
+        background-color: #CDC6AAAA;
+        border-radius: 5px;
+        position: absolute;
+        z-index: 12;
+        cursor: move;
+    }
+</style>
+
+<body style="overflow:hidden;background-color: #CDC6AAAA;">
+    <div id="tilecontainer">
+    </div>
+    <div style="position:absolute;z-index:12">
+        <span id="player" class="button">Player 1</span>
+        <span id="tileCounter" class="button">80 Tiles Left</span>
+        <span id="roundCounter" class="button">Round 1</span>
+        <span class="button" onclick="turn()">Finish Turn</span>
+        <span id="hiderButton" class="button" onclick="hide()">Hide My Tiles</span>
+        <span id="specialsButton" class="button" onclick="special()">Show Multipliers</span>
+
+    </div>
+
+    <img id="hider" class="invisible" src="./hider.jpg">
+    <img id="specials" class="invisible" src="./specials.png">
+    <img id="board" src="./board.jpg">
+    <div id="scores" class="button">
+        <div style="color: #2196F3"><b>Player 1</b><br>Game: <b id="p1game">0</b><br>Round: <b id="p1round">0</b><br><input id="p1input" type="number" value="0" style="width:50px;border-radius:5px"></div>
+        <div style="color: #f27521"><b>Player 2</b><br>Game: <b id="p2game">0</b><br>Round: <b id="p2round">0</b><br><input id="p2input" type="number" value="0" style="width:50px;border-radius:5px"></div>
+    </div>
+
+    <script>
+        // prevent image drag
+        document.getElementById('hider').ondragstart = function() {
+            return false;
+        };
+        document.getElementById('specials').ondragstart = function() {
+            return false;
+        };
+        document.getElementById('board').ondragstart = function() {
+            return false;
+        };
+        //initialization
+        tilecount = 0; //to give each tile a unique id
+        spots = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; //to keep track of where to put new tiles
+        bag = [];
+        player1 = true; //to keep track of whose turn it is
+        player1inventory = [];
+        player1round = 0;
+        player1game = 0;
+        player2inventory = [];
+        player2round = 0;
+        player2game = 0;
+        round = 0;
+
+        dragElement(document.getElementById("scores"));
+
+        //fix board height
+        if (window.innerHeight > window.innerWidth) {
+            document.getElementById("board").width = window.innerWidth;
+            document.getElementById("specials").width = window.innerWidth;
+            document.getElementById("hider").height = window.innerWidth;
+            document.getElementById("scores").style.top = window.innerWidth + "px";
+            document.getElementById("scores").style.left = "0px";
+        } else {
+            document.getElementById("board").width = window.innerHeight;
+            document.getElementById("specials").width = window.innerHeight;
+            document.getElementById("hider").height = window.innerHeight;
+            document.getElementById("scores").style.left = window.innerHeight + "px";
+            document.getElementById("scores").style.top = "0px";
+        }
+
+        //define deck distribition
+        tiles = [{
+            text: "A",
+            number: 9,
+            value: 1
+        }, {
+            text: "B",
+            number: 2,
+            value: 3
+        }, {
+            text: "C",
+            number: 2,
+            value: 3
+        }, {
+            text: "D",
+            number: 4,
+            value: 2
+        }, {
+            text: "E",
+            number: 12,
+            value: 1
+        }, {
+            text: "F",
+            number: 2,
+            value: 4
+        }, {
+            text: "G",
+            number: 3,
+            value: 2
+        }, {
+            text: "H",
+            number: 2,
+            value: 4
+        }, {
+            text: "I",
+            number: 9,
+            value: 1
+        }, {
+            text: "J",
+            number: 1,
+            value: 8
+        }, {
+            text: "K",
+            number: 1,
+            value: 5
+        }, {
+            text: "L",
+            number: 4,
+            value: 1
+        }, {
+            text: "M",
+            number: 2,
+            value: 3
+        }, {
+            text: "N",
+            number: 6,
+            value: 1
+        }, {
+            text: "O",
+            number: 8,
+            value: 1
+        }, {
+            text: "P",
+            number: 2,
+            value: 3
+        }, {
+            text: "Q",
+            number: 1,
+            value: 10
+        }, {
+            text: "R",
+            number: 6,
+            value: 1
+        }, {
+            text: "S",
+            number: 4,
+            value: 1
+        }, {
+            text: "T",
+            number: 6,
+            value: 1
+        }, {
+            text: "U",
+            number: 4,
+            value: 1
+        }, {
+            text: "V",
+            number: 2,
+            value: 4
+        }, {
+            text: "W",
+            number: 2,
+            value: 4
+        }, {
+            text: "X",
+            number: 1,
+            value: 8
+        }, {
+            text: "Y",
+            number: 2,
+            value: 4
+        }, {
+            text: "Z",
+            number: 1,
+            value: 10
+        }, {
+            text: "_",
+            number: 2,
+            value: 0
+        }];
+
+        //create bag
+        tiles.forEach(function(item, index) {
+            for (var i = 0; i < item.number; i++) {
+                bag.push({
+                    text: item.text,
+                    value: item.value
+                });
+            }
+        });
+        shuffle(bag); //shuffle bag
+
+        //load initial tiles
+        turn();
+        turn();
+
+        //create tile that the user can interact with
+        function spawnTile(tile, player) {
+            var spot = 1;
+            //create new tile
+            var container = document.createElement("div");
+            container.setAttribute("id", "tile_" + tilecount);
+            container.className = "draggable";
+            tilecount = tilecount + 1;
+            var label = document.createElement("div");
+            //figure out where to put it
+            if (player == 2) {
+                label.className = "tileLabel player2";
+                for (var i = 7; i <= 13; i++) {
+                    if (spots[i] == 0) {
+                        spots[i] = 1;
+                        spot = i;
+                        container.style.top = Math.round(document.getElementById("board").width / 19) * (spot + 1) + "px";
+                        break;
+                    }
+                }
+            } else {
+                label.className = "tileLabel player1";
+                for (var i = 0; i <= 6; i++) {
+                    if (spots[i] == 0) {
+                        spots[i] = 1;
+                        spot = i;
+                        container.style.top = Math.round(document.getElementById("board").width / 19) * (spot + 1) + "px";
+                        break;
+                    }
+                }
+            }
+            //add which letter it is
+            if (tile.text == "_") {
+                label.contentEditable = "true";
+            }
+            label.style.height = (Math.round(document.getElementById("board").width / 19) - 10) + "px";
+            label.style.width = (Math.round(document.getElementById("board").width / 21) - 10) + "px";
+            var labelText = document.createTextNode(tile.text);
+            container.appendChild(label);
+            label.appendChild(labelText);
+
+            //add what the value is
+            var value = document.createElement("div");
+            value.className = "valueLabel";
+            var valueText = document.createTextNode(tile.value + " ");
+            container.appendChild(value);
+            value.appendChild(valueText);
+
+            //add it to the board and make it draggable
+            document.getElementById("tilecontainer").appendChild(container);
+            dragElement(container);
+            //keep track of its unique id and where we put it
+            tile.id = container.id;
+            tile.spot = spot;
+            //add it to the player's inventory
+            if (player == 2) {
+                player2inventory.push(tile);
+            } else {
+                player1inventory.push(tile);
+            }
+        }
+
+        //move to the next turn
+        function turn() {
+            //give players new tiles
+            while ((player1inventory.length < 7) && (bag.length > 0)) {
+                var tile1 = bag.pop();
+                //player1inventory.push(tile1);
+                spawnTile(tile1, 1);
+            }
+            while ((player2inventory.length < 7) && (bag.length > 0)) {
+                var tile2 = bag.pop();
+                //player2inventory.push(tile2);
+                spawnTile(tile2, 2);
+            }
+            if (player1) {
+                //update turn marker, change label
+                player1 = !player1;
+                document.getElementById("player").innerHTML = "Player 2";
+                document.getElementById("player").style.color = "#f27521";
+                //hide opponent's tiles
+                var unplacedTiles = document.getElementsByClassName("draggable");
+                for (var i = 0; i < unplacedTiles.length; i++) {
+                    if (unplacedTiles.item(i).firstChild.className.includes("player1")) {
+                        unplacedTiles.item(i).className = "draggable invisible";
+                    } else if (unplacedTiles.item(i).firstChild.className.includes("player2")) {
+                        unplacedTiles.item(i).className = "draggable";
+                    }
+                }
+                //unhiglight previous turn's tiles
+                var oldNewTiles = document.getElementsByClassName("newp2");
+                while (oldNewTiles.length > 0) {
+                    var lastElmnt = oldNewTiles[oldNewTiles.length - 1];
+                    lastElmnt.className = "tileLabel played";
+                }
+                //switch score input
+                document.getElementById("p2input").className = "";
+                document.getElementById("p1input").className = "invisible";
+                player1round = (parseInt(document.getElementById("p1input").value) || 0);
+                document.getElementById("p1round").innerHTML = player1round;
+                player1game = player1game + player1round;
+                document.getElementById("p1game").innerHTML = player1game;
+                document.getElementById("p1input").value = 0;
+            } else {
+                //update turn marker, change label
+                player1 = !player1;
+                document.getElementById("player").innerHTML = "Player 1";
+                document.getElementById("player").style.color = "#2196F3";
+                //hide opponent's tiles
+                var unplacedTiles = document.getElementsByClassName("draggable");
+                for (var i = 0; i < unplacedTiles.length; i++) {
+                    if (unplacedTiles.item(i).firstChild.className.includes("player2")) {
+                        unplacedTiles.item(i).className = "draggable invisible";
+                    } else if (unplacedTiles.item(i).firstChild.className.includes("player1")) {
+                        unplacedTiles.item(i).className = "draggable";
+                    }
+                }
+                //unhiglight previous turn's tiles
+                var oldNewTiles = document.getElementsByClassName("newp1");
+                while (oldNewTiles.length > 0) {
+                    var lastElmnt = oldNewTiles[oldNewTiles.length - 1];
+                    lastElmnt.className = "tileLabel played";
+                }
+                //switch score input
+                document.getElementById("p1input").className = "";
+                document.getElementById("p2input").className = "invisible";
+                player2round = (parseInt(document.getElementById("p2input").value) || 0);
+                document.getElementById("p2round").innerHTML = player2round;
+                player2game = player2game + player2round;
+                document.getElementById("p2game").innerHTML = player2game;
+                document.getElementById("p2input").value = 0;
+                round = round + 1;
+                document.getElementById("roundCounter").innerHTML = "Round " + round;
+            }
+            document.getElementById("tileCounter").innerHTML = bag.length + " Tiles Left";
+        }
+
+        function hide() {
+            if (document.getElementById("hiderButton").innerHTML == "Show My Tiles") {
+                document.getElementById("hider").className = "invisible";
+                document.getElementById("hiderButton").innerHTML = "Hide My Tiles";
+            } else {
+                document.getElementById("hider").className = "";
+                document.getElementById("hiderButton").innerHTML = "Show My Tiles";
+            }
+        }
+
+        function special() {
+            if (document.getElementById("specialsButton").innerHTML == "Hide Multipliers") {
+                document.getElementById("specials").className = "invisible";
+                document.getElementById("specialsButton").innerHTML = "Show Multipliers";
+            } else {
+                document.getElementById("specials").className = "";
+                document.getElementById("specialsButton").innerHTML = "Hide Multipliers";
+            }
+        }
+
+        //makes element draggable
+        function dragElement(elmnt) {
+            var pos1 = 0,
+                pos2 = 0,
+                pos3 = 0,
+                pos4 = 0;
+            if (document.getElementById(elmnt.id + "header")) {
+                /* if present, the header is where you move the DIV from:*/
+                document.getElementById(elmnt.id + "header").onmousedown = dragMouseDown;
+            } else {
+                /* otherwise, move the DIV from anywhere inside the DIV:*/
+                elmnt.onmousedown = dragMouseDown;
+            }
+
+            elmnt.oncontextmenu = function() {
+                fixTile(event, elmnt)
+            };
+
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                if (!elmnt.firstChild.className || !elmnt.firstChild.className.includes("played")) { //don't move it if it's already been placed
+                    // get the mouse cursor position at startup:
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    document.onmouseup = closeDragElement;
+                    // call a function whenever the cursor moves:
+                    document.onmousemove = elementDrag;
+                }
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                // calculate the new cursor position:
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                // set the element's new position:
+                elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                /* stop moving when mouse button is released:*/
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+
+            //when user tries to place tile
+            function fixTile(event, elmnt) {
+                event.preventDefault(); //prevent context menu from appearing
+                if (elmnt.firstChild.className.includes("player1") && player1) { //only allow interaction if it's that player's turn and the tile hasn't been placed yet
+                    //find the tile that was fixed
+                    var inventoryItems = player1inventory.filter(function(e) {
+                        return e.id == elmnt.id
+                    });
+                    //remember that we can put the replacement tile where it came from
+                    inventoryItems.forEach(function(item, index) {
+                        spots[item.spot] = 0;
+                    });
+                    //remove that tile from the player's inventory
+                    player1inventory = player1inventory.filter(function(e) {
+                        return e.id !== elmnt.id
+                    });
+                    //mark the tile as placed
+                    elmnt.firstChild.className = "tileLabel played newp1";
+                } else if (elmnt.firstChild.className.includes("player2") && !player1) { //only allow interaction if it's that player's turn and the tile hasn't been placed yet
+                    //find the tile that was fixed
+                    var inventoryItems = player2inventory.filter(function(e) {
+                        return e.id == elmnt.id
+                    });
+                    //remember that we can put the replacement tile where it came from
+                    inventoryItems.forEach(function(item, index) {
+                        spots[item.spot] = 0;
+                    });
+                    //remove that tile from the player's inventory
+                    player2inventory = player2inventory.filter(function(e) {
+                        return e.id !== elmnt.id
+                    });
+                    //mark the tile as placed
+                    elmnt.firstChild.className = "tileLabel played newp2";
+                }
+            }
+        }
+
+        //shuffling algorithm
+        function shuffle(array) {
+            var currentIndex = array.length,
+                temporaryValue, randomIndex;
+
+            // While there remain elements to shuffle...
+            while (0 !== currentIndex) {
+
+                // Pick a remaining element...
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex -= 1;
+
+                // And swap it with the current element.
+                temporaryValue = array[currentIndex];
+                array[currentIndex] = array[randomIndex];
+                array[randomIndex] = temporaryValue;
+            }
+
+            return array;
+        }
+    </script>
+
+</body>
+
+</html>
