@@ -1,88 +1,129 @@
 <!DOCTYPE html>
-<html>
-<style>
-    .draggable {
-        position: absolute;
-        z-index: 9;
-        text-align: center;
-        border: 1px solid #d3d3d3;
-    }
-    
-    .tileLabel {
-        padding: 5px;
-        cursor: move;
-        z-index: 10;
-        color: #fff;
-        font-size: small;
-        vertical-align: middle;
-        text-align: center;
-        display: table-cell;
-    }
-    
-    .tileLabel.player1 {
-        background-color: #2196F3;
-    }
-    
-    .tileLabel.player2 {
-        background-color: #f27521;
-    }
-    
-    .tileLabel.played {
-        background-color: #736b5e;
-    }
-    
-    .tileLabel.played.newp1 {
-        background-color: #155d99 !important;
-    }
-    
-    .tileLabel.played.newp2 {
-        background-color: #994a15 !important;
-    }
-    
-    .valueLabel {
-        position: absolute;
-        z-index: 10;
-        top: 0;
-        right: 0;
-    }
-    
-    .invisible {
-        display: none;
-    }
-    
-    .button {
-        padding: 4px;
-        margin-right: 4px;
-        background-color: #CDC6AAAA;
-        user-select: none;
-        border-radius: 5px;
-    }
-    
-    #board,
-    #specials,
-    #hider {
-        position: absolute;
-        top: 0px;
-        left: 0px;
-    }
-    
-    #hider {
-        z-index: 10;
-    }
-    
-    #specials {
-        z-index: 11;
-    }
-    
-    #scores {
-        padding: 4px;
-        background-color: #CDC6AAAA;
-        border-radius: 5px;
-        position: absolute;
-        z-index: 12;
-        cursor: move;
-    }
-</style>
+<html lang="en-US">
+
+<head>
+    <title>Scrabble</title>
+    <meta charset="UTF-8">
+    <style>
+        .draggable {
+            position: absolute;
+            z-index: 9;
+            text-align: center;
+            border: 1px solid #d3d3d3;
+        }
+        
+        .draggable.played {
+            z-index: 8 !important;
+        }
+        
+        .tileLabel {
+            padding: 5px;
+            cursor: move;
+            z-index: 10;
+            color: #fff;
+            font-size: small;
+            vertical-align: middle;
+            text-align: center;
+            display: table-cell;
+            background-image: url(./tile.png);
+            background-size: 100% 100%;
+            background-attachment: fixed;
+        }
+        
+        .tileLabel.player1,
+        .tileLabel.player1 input {
+            color: #2196F3;
+        }
+        
+        .tileLabel.player2,
+        .tileLabel.player2 input {
+            color: #f27521;
+        }
+        
+        .tileLabel.played,
+        .tileLabel.played input {
+            color: #272727;
+        }
+        
+        .tileLabel.played.newp1,
+        .tileLabel.played.newp1 input {
+            color: #155d99 !important;
+        }
+        
+        .tileLabel.played.newp2,
+        .tileLabel.played.newp2 input {
+            color: #994a15 !important;
+        }
+        
+        .tileLabel input {
+            background-color: #00000000;
+        }
+        
+        .valueLabel {
+            position: absolute;
+            z-index: 10;
+            top: 0;
+            right: 0;
+            color: #272727;
+            cursor: move;
+        }
+        
+        .invisible {
+            display: none;
+        }
+        
+        .button,
+        #scores,
+        input {
+            border-radius: 5px;
+            border-width: 1px;
+            border-color: #4B605B;
+            border-style: solid;
+        }
+        
+        .button {
+            padding: 4px;
+            margin-right: 4px;
+            background-color: #CDC6AAAA;
+            user-select: none;
+            cursor: pointer;
+        }
+        
+        .submit {
+            margin: 8px;
+        }
+        
+        #board,
+        #specials,
+        #hider {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+        }
+        
+        #hider {
+            z-index: 10;
+        }
+        
+        #specials {
+            z-index: 11;
+        }
+        
+        #scores {
+            padding: 4px;
+            background-color: #CDC6AAAA;
+            position: absolute;
+            z-index: 12;
+            cursor: move;
+            text-align: center;
+        }
+        
+        input {
+            width: 50px;
+        }
+    </style>
+</head>
+
 
 <body style="overflow:hidden;background-color: #CDC6AAAA;">
     <div id="tilecontainer">
@@ -91,9 +132,9 @@
         <span id="player" class="button">Player 1</span>
         <span id="tileCounter" class="button">80 Tiles Left</span>
         <span id="roundCounter" class="button">Round 1</span>
-        <span class="button" onclick="turn()">Finish Turn</span>
         <span id="hiderButton" class="button" onclick="hide()">Hide My Tiles</span>
         <span id="specialsButton" class="button" onclick="special()">Show Multipliers</span>
+        <span class="button" onclick="finishGame()">Finish Game</span>
 
     </div>
 
@@ -101,8 +142,9 @@
     <img id="specials" class="invisible" src="./specials.png">
     <img id="board" src="./board.jpg">
     <div id="scores" class="button">
-        <div style="color: #2196F3"><b>Player 1</b><br>Game: <b id="p1game">0</b><br>Round: <b id="p1round">0</b><br><input id="p1input" type="number" value="0" style="width:50px;border-radius:5px"></div>
-        <div style="color: #f27521"><b>Player 2</b><br>Game: <b id="p2game">0</b><br>Round: <b id="p2round">0</b><br><input id="p2input" type="number" value="0" style="width:50px;border-radius:5px"></div>
+        <div style="color: #2196F3"><b>Player 1</b><br>Game: <b id="p1game">0</b><br>Round: <b id="p1round">0</b><br><input id="p1input" type="number" value="0"></div>
+        <div style="color: #f27521"><b>Player 2</b><br>Game: <b id="p2game">0</b><br>Round: <b id="p2round">0</b><br><input id="p2input" type="number" value="0"></div>
+        <div id="submit" class="button" onclick="turn()">Submit</div>
     </div>
 
     <script>
@@ -116,11 +158,16 @@
         document.getElementById('board').ondragstart = function() {
             return false;
         };
+
+        //because input values persist across reloads for some reason
+        document.getElementById("p1input").value = 0;
+        document.getElementById("p2input").value = 0;
+
         //initialization
         tilecount = 0; //to give each tile a unique id
         spots = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; //to keep track of where to put new tiles
         bag = [];
-        player1 = true; //to keep track of whose turn it is
+        player1 = false; //to keep track of whose turn it is
         player1inventory = [];
         player1round = 0;
         player1game = 0;
@@ -128,7 +175,9 @@
         player2round = 0;
         player2game = 0;
         round = 0;
+        placedTiles = 1;
 
+        //make score box draggable
         dragElement(document.getElementById("scores"));
 
         //fix board height
@@ -270,7 +319,8 @@
 
         //load initial tiles
         turn();
-        turn();
+        hide();
+        alert("Scrabble Instructions (2 players only):\n• Drag tiles to desired location.\n• Ctrl+click your tiles to place them. This cannot be undone, so be sure of your move before placing them.\n• If you wish to consult with the other player before placing a word, use the 'Hide my tiles' button\n\tto hide your unplaced tiles temporarily.\n• Calculate, using 'Show Multipliers' if necessary, and click 'Submit' when done. The game will enter the tiles'\n\tface values automatically but is unable to calculate the value of multipliers or previously placed tiles you used\n\tas part of your word.\n• The game automatically hides the player's tiles at the beginning of a turn to prevent the previous player from\n\tseeing them; they can click 'Show My Tiles' to see them.\n• The game will prompt you if you submit without placing tiles; if you cannot find a valid play, click 'OK' to continue.\n• The game will terminate, calculate the final scores, and announce a winner automatically when a player\n\truns out of tiles and there are none left in the bag; however, you can click the 'Finish Game' button\n\tto end the game preemptively.\n\nEnjoy!");
 
         //create tile that the user can interact with
         function spawnTile(tile, player) {
@@ -303,15 +353,27 @@
                     }
                 }
             }
-            //add which letter it is
-            if (tile.text == "_") {
-                label.contentEditable = "true";
-            }
             label.style.height = (Math.round(document.getElementById("board").width / 19) - 10) + "px";
             label.style.width = (Math.round(document.getElementById("board").width / 21) - 10) + "px";
-            var labelText = document.createTextNode(tile.text);
+            label.style.fontSize = (Math.round(document.getElementById("board").width / 19) - 20) + "px";
+            //var labelText = document.createTextNode(tile.text);
             container.appendChild(label);
-            label.appendChild(labelText);
+            //label.appendChild(labelText);
+            //add which letter it is
+            if (tile.text == "_") {
+                //if it's a blank tile, add an editable text box
+                var labelText = document.createElement("input");
+                labelText.type = "text";
+                labelText.maxLength = 1;
+                labelText.style.fontSize = (Math.round(document.getElementById("board").width / 19) - 20) + "px";
+                labelText.style.width = (Math.round(document.getElementById("board").width / 21) - 15) + "px";
+                labelText.style.textAlign = "center";
+                label.appendChild(labelText);
+            } else {
+                //otherwise just a normal text label
+                var labelText = document.createTextNode(tile.text);
+                label.appendChild(labelText);
+            }
 
             //add what the value is
             var value = document.createElement("div");
@@ -336,17 +398,25 @@
 
         //move to the next turn
         function turn() {
+            if (placedTiles == 0) {
+                if (confirm("You haven't placed anything. Are you sure you want to submit?")) {} else {
+                    return;
+                }
+            }
+            if ((player1 && player1inventory.length == 0 && bag.length == 0) || (!player1 && player2inventory.length == 0 && bag.length == 0)) {
+                finishGame();
+                return;
+            }
             //give players new tiles
             while ((player1inventory.length < 7) && (bag.length > 0)) {
                 var tile1 = bag.pop();
-                //player1inventory.push(tile1);
                 spawnTile(tile1, 1);
             }
             while ((player2inventory.length < 7) && (bag.length > 0)) {
                 var tile2 = bag.pop();
-                //player2inventory.push(tile2);
                 spawnTile(tile2, 2);
             }
+            //if it was player 1's turn, make it player 2's turn
             if (player1) {
                 //update turn marker, change label
                 player1 = !player1;
@@ -366,6 +436,7 @@
                 while (oldNewTiles.length > 0) {
                     var lastElmnt = oldNewTiles[oldNewTiles.length - 1];
                     lastElmnt.className = "tileLabel played";
+                    lastElmnt.parentElement.className = "draggable played";
                 }
                 //switch score input
                 document.getElementById("p2input").className = "";
@@ -375,7 +446,7 @@
                 player1game = player1game + player1round;
                 document.getElementById("p1game").innerHTML = player1game;
                 document.getElementById("p1input").value = 0;
-            } else {
+            } else { //if it was player 2's turn, make it player 1's turn
                 //update turn marker, change label
                 player1 = !player1;
                 document.getElementById("player").innerHTML = "Player 1";
@@ -394,6 +465,7 @@
                 while (oldNewTiles.length > 0) {
                     var lastElmnt = oldNewTiles[oldNewTiles.length - 1];
                     lastElmnt.className = "tileLabel played";
+                    lastElmnt.parentElement.className = "draggable played";
                 }
                 //switch score input
                 document.getElementById("p1input").className = "";
@@ -407,6 +479,10 @@
                 document.getElementById("roundCounter").innerHTML = "Round " + round;
             }
             document.getElementById("tileCounter").innerHTML = bag.length + " Tiles Left";
+            placedTiles = 0;
+            if (document.getElementById("hider").className.includes("invisible")) {
+                hide();
+            }
         }
 
         function hide() {
@@ -429,6 +505,88 @@
             }
         }
 
+        function finishGame() {
+            if ((player1 && player1inventory.length > 0 && bag.length > 0) || (!player1 && player2inventory.length > 0 && bag.length > 0)) {
+                if (confirm("You haven't run out of tiles. Are you sure you want to end the game?")) {} else {
+                    return;
+                }
+            }
+            //hide stuff
+            document.getElementById("submit").className = "button invisible";
+            document.getElementById("hiderButton").className = "button invisible";
+            document.getElementById("p1input").className = "invisible";
+
+            //unhiglight previous turn's tiles
+            var oldNewTiles = document.getElementsByClassName("newp2");
+            while (oldNewTiles.length > 0) {
+                var lastElmnt = oldNewTiles[oldNewTiles.length - 1];
+                lastElmnt.className = "tileLabel played";
+            }
+            //if player one ended the game
+            if (player1) {
+                //start a new "round" for tile transfer
+                player1round = (parseInt(document.getElementById("p1input").value) || 0);
+                player2round = 0;
+                player2inventory.forEach(function(item, index) {
+                    //place unplayed tiles
+                    document.getElementById(item.id).className = "draggable";
+                    document.getElementById(item.id).firstChild.className = "tileLabel played newp2";
+                    //add other player's tiles to score
+                    player1round = player1round + item.value;
+                    player2round = player2round - item.value;
+                });
+                player1inventory.forEach(function(item, index) {
+                    //place unplayed tiles
+                    document.getElementById(item.id).className = "draggable";
+                    document.getElementById(item.id).firstChild.className = "tileLabel played newp1";
+                });
+                player1inventory = [];
+                player2inventory = [];
+                //update score displays
+                document.getElementById("p1round").innerHTML = player1round;
+                document.getElementById("p2round").innerHTML = player2round;
+                player1game = player1game + player1round;
+                player2game = player2game + player2round;
+                document.getElementById("p1game").innerHTML = player1game;
+                document.getElementById("p2game").innerHTML = player2game;
+            } else {
+                //start a new "round" for tile transfer
+                player2round = (parseInt(document.getElementById("p2input").value) || 0);
+                player1round = 0;
+                player1inventory.forEach(function(item, index) {
+                    //place other player's unplayed tiles
+                    document.getElementById(item.id).className = "draggable";
+                    document.getElementById(item.id).firstChild.className = "tileLabel played newp1";
+                    //add other player's tiles to score
+                    player1round = player1round - item.value;
+                    player2round = player2round + item.value;
+                });
+                player2inventory.forEach(function(item, index) {
+                    //place player's unplayed tiles
+                    document.getElementById(item.id).className = "draggable";
+                    document.getElementById(item.id).firstChild.className = "tileLabel played newp2";
+                });
+                player1inventory = [];
+                player2inventory = [];
+                //update score displays
+                document.getElementById("p1round").innerHTML = player1round;
+                document.getElementById("p2round").innerHTML = player2round;
+                player1game = player1game + player1round;
+                player2game = player2game + player2round;
+                document.getElementById("p1game").innerHTML = player1game;
+                document.getElementById("p2game").innerHTML = player2game;
+            }
+            //announce winner
+            if (player1game > player2game) {
+                alert("Player 1 wins!");
+            } else if (player1game < player2game) {
+                alert("Player 2 wins!");
+            } else {
+                alert("Tie");
+            }
+        }
+
+
         //makes element draggable
         function dragElement(elmnt) {
             var pos1 = 0,
@@ -443,20 +601,29 @@
                 elmnt.onmousedown = dragMouseDown;
             }
 
-            elmnt.oncontextmenu = function() {
-                fixTile(event, elmnt)
-            };
-
             function dragMouseDown(e) {
                 e = e || window.event;
-                e.preventDefault();
-                if (!elmnt.firstChild.className || !elmnt.firstChild.className.includes("played")) { //don't move it if it's already been placed
-                    // get the mouse cursor position at startup:
-                    pos3 = e.clientX;
-                    pos4 = e.clientY;
-                    document.onmouseup = closeDragElement;
-                    // call a function whenever the cursor moves:
-                    document.onmousemove = elementDrag;
+                if (e.target.tagName == "INPUT" || e.target.className.includes("button")) { //let the player click on the score input and submit
+                } else if (e.ctrlKey) { //player the tile if user control-clicks
+                    e.preventDefault();
+                    fixTile(elmnt);
+                } else { //player is dragging
+                    e.preventDefault();
+                    if (typeof elmnt.firstChild.className == "undefined") { //if it's not a tile
+                        // get the mouse cursor position at startup:
+                        pos3 = e.clientX;
+                        pos4 = e.clientY;
+                        document.onmouseup = closeDragElement;
+                        // call a function whenever the cursor moves:
+                        document.onmousemove = elementDrag;
+                    } else if (!elmnt.firstChild.className.includes("played")) { //or it's an unplaced tile
+                        // get the mouse cursor position at startup:
+                        pos3 = e.clientX;
+                        pos4 = e.clientY;
+                        document.onmouseup = closeDragElement;
+                        // call a function whenever the cursor moves:
+                        document.onmousemove = elementDrag;
+                    }
                 }
             }
 
@@ -480,9 +647,12 @@
             }
 
             //when user tries to place tile
-            function fixTile(event, elmnt) {
-                event.preventDefault(); //prevent context menu from appearing
+            function fixTile(elmnt) {
                 if (elmnt.firstChild.className.includes("player1") && player1) { //only allow interaction if it's that player's turn and the tile hasn't been placed yet
+                    //if it's a blank tile disable changing it
+                    if (elmnt.firstChild.firstChild.tagName = "INPUT") {
+                        elmnt.firstChild.firstChild.disabled = true;
+                    }
                     //find the tile that was fixed
                     var inventoryItems = player1inventory.filter(function(e) {
                         return e.id == elmnt.id
@@ -490,6 +660,7 @@
                     //remember that we can put the replacement tile where it came from
                     inventoryItems.forEach(function(item, index) {
                         spots[item.spot] = 0;
+                        document.getElementById("p1input").value = parseInt(document.getElementById("p1input").value) + item.value;
                     });
                     //remove that tile from the player's inventory
                     player1inventory = player1inventory.filter(function(e) {
@@ -497,7 +668,13 @@
                     });
                     //mark the tile as placed
                     elmnt.firstChild.className = "tileLabel played newp1";
+                    elmnt.className = "draggable played";
+                    placedTiles = placedTiles + 1;
                 } else if (elmnt.firstChild.className.includes("player2") && !player1) { //only allow interaction if it's that player's turn and the tile hasn't been placed yet
+                    //if it's a blank tile disable changing it
+                    if (elmnt.firstChild.firstChild.tagName = "INPUT") {
+                        elmnt.firstChild.firstChild.disabled = true;
+                    }
                     //find the tile that was fixed
                     var inventoryItems = player2inventory.filter(function(e) {
                         return e.id == elmnt.id
@@ -505,6 +682,7 @@
                     //remember that we can put the replacement tile where it came from
                     inventoryItems.forEach(function(item, index) {
                         spots[item.spot] = 0;
+                        document.getElementById("p2input").value = parseInt(document.getElementById("p2input").value) + item.value;
                     });
                     //remove that tile from the player's inventory
                     player2inventory = player2inventory.filter(function(e) {
@@ -512,6 +690,8 @@
                     });
                     //mark the tile as placed
                     elmnt.firstChild.className = "tileLabel played newp2";
+                    elmnt.className = "draggable played";
+                    placedTiles = placedTiles + 1;
                 }
             }
         }
